@@ -1,104 +1,75 @@
-document.addEventListener('DOMContentLoaded', function() {
-    loadEntriesFromLocalStorage();
-});
+const form = document.querySelector("#submit-form");
+const table = document.querySelector("tbody");
 
-document.getElementById('registrationForm').addEventListener('submit', function(event) {
-    event.preventDefault();
+function updateTable(){
+    // Clear the table content before updating it
+    table.innerHTML = "";
 
-    const name = document.getElementById('name').value.trim();
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value.trim();
-    const dob = document.getElementById('dob').value;
-    const termsAccepted = document.getElementById('terms').checked;
-
-    // Validate all fields are filled
-    if (!name || !email || !password || !dob || !termsAccepted) {
-        alert('Please fill all fields and accept the terms and conditions.');
-        return;
-    }
-
-    // Validate email format
-    if (!validateEmail(email)) {
-        alert('Please enter a valid email address.');
-        return;
-    }
-
-    // Validate Date of Birth (between 18 and 55 years)
-    if (!validateDOB(dob)) {
-        alert('Date of Birth must be between 18 and 55 years.');
-        return;
-    }
-
-    // Store the entry in local storage
-    saveEntryToLocalStorage(name, email, password, dob, termsAccepted);
-
-    // Clear the form after submission
-    document.getElementById('registrationForm').reset();
-
-    // Reload entries from local storage to show the new entry
-    loadEntriesFromLocalStorage();
-});
-
-function validateEmail(email) {
-    const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    return emailPattern.test(email);
-}
-
-function validateDOB(dob) {
-    const birthDate = new Date(dob);
-    const today = new Date();
+    let entries = JSON.parse(localStorage.getItem("user-entries")) || [];
     
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    const dayDiff = today.getDate() - birthDate.getDate();
-    
-    // Adjust age if birth date is later in the year than today's date
-    if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
-        age--;
-    }
+    entries.forEach(element => {
+        let entry = document.createElement("tr");
+        table.appendChild(entry);
+        
+        let name_entry = document.createElement("td");
+        name_entry.append(element.name);
+        entry.appendChild(name_entry);
 
-    return age >= 18 && age <= 55;
-}
+        let email_entry = document.createElement("td");
+        email_entry.append(element.email);
+        entry.appendChild(email_entry);
 
-function saveEntryToLocalStorage(name, email, password, dob, termsAccepted) {
-    const entries = getEntriesFromLocalStorage();
-    entries.push({ name, email, password, dob, termsAccepted });
-    localStorage.setItem('formEntries', JSON.stringify(entries));
-}
+        let password = document.createElement("td");
+        password.append(element.password);
+        entry.appendChild(password);
 
-function getEntriesFromLocalStorage() {
-    const entries = localStorage.getItem('formEntries');
-    return entries ? JSON.parse(entries) : [];
-}
+        let date = document.createElement("td");
+        date.append(element.dob);
+        entry.appendChild(date);
 
-function loadEntriesFromLocalStorage() {
-    const entries = getEntriesFromLocalStorage();
-    const tableBody = document.querySelector('#entriesTable tbody');
-    tableBody.innerHTML = ''; // Clear the table body
-
-    entries.forEach(entry => {
-        const newRow = document.createElement('tr');
-
-        const nameCell = document.createElement('td');
-        nameCell.textContent = entry.name;
-        newRow.appendChild(nameCell);
-
-        const emailCell = document.createElement('td');
-        emailCell.textContent = entry.email;
-        newRow.appendChild(emailCell);
-
-        const passwordCell = document.createElement('td');
-        passwordCell.textContent = entry.password; // To Mask the password entry.password.replace(/./g, '*')
-        newRow.appendChild(passwordCell);
-
-        const dobCell = document.createElement('td');
-        dobCell.textContent = entry.dob;
-        newRow.appendChild(dobCell);
-
-        const termsCell = document.createElement('td');
-        termsCell.textContent = entry.termsAccepted ? 'True' : 'False';
-        newRow.appendChild(termsCell);
-
-        tableBody.appendChild(newRow);
+        let checked  = document.createElement("td");
+        checked.append(element.checked ? "true" : "false");
+        entry.appendChild(checked);
     });
 }
+
+function handleSubmit(event) {
+    event.preventDefault();
+    
+    let userEntries = JSON.parse(localStorage.getItem("user-entries")) || [];
+
+    const name = document.querySelector("#name").value;
+    const dob = document.querySelector("#dob").value;
+    const password = document.querySelector("#password").value;
+    const email = document.querySelector("#email").value;
+    let checked = document.querySelector("#terms").checked;
+
+    const data = {
+        name,
+        dob,
+        password,
+        email,
+        checked
+    };
+    
+    userEntries.push(data);
+    localStorage.setItem("user-entries", JSON.stringify(userEntries));
+    
+    updateTable(); // Update table after submission
+}
+
+form.addEventListener("submit", handleSubmit);
+
+// Initialize entries from localStorage on page load
+updateTable();
+
+// Set max date for the Date of Birth input field
+const dateInput = document.querySelector("#dob");
+const today = new Date();
+const formattedMax = today.getFullYear()-18 + "-" + String(today.getMonth() + 1).padStart(2, '0') + "-" + String(today.getDate()).padStart(2, '0');
+const formattedMin = today.getFullYear()-55 + "-" + String(today.getMonth() + 1).padStart(2, '0') + "-" + String(today.getDate()).padStart(2, '0');
+dateInput.max = formattedMax;
+dateInput.min = formattedMin;
+
+console.log(typeof(dateInput.max));  // Outputs string
+console.log(dateInput.value);  // Check current date value
